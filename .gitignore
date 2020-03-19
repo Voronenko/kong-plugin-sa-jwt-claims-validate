@@ -4,3 +4,4 @@ servroot
 
 # packed distribution format for LuaRocks
 *.rock
+*.tar.gz

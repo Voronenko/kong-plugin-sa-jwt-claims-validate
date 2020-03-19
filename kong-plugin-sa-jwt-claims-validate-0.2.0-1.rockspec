@@ -1,7 +1,7 @@
 package = "kong-plugin-sa-jwt-claims-validate"  -- TODO: rename, must match the info in the filename of this rockspec!
                                   -- as a convention; stick to the prefix: `kong-plugin-`
-version = "0.1.0-1"               -- TODO: renumber, must match the info in the filename of this rockspec!
--- The version '0.1.0' is the source code version, the trailing '1' is the version of this rockspec.
+version = "0.2.0-1"               -- TODO: renumber, must match the info in the filename of this rockspec!
+-- The version '0.2.0' is the source code version, the trailing '1' is the version of this rockspec.
 -- whenever the source version changes, the rockspec should be reset to 1. The rockspec version is only
 -- updated (incremented) when this file changes, but the source remains the same.
 
@@ -9,10 +9,10 @@ version = "0.1.0-1"               -- TODO: renumber, must match the info in the 
 -- Here we extract it from the package name.
 local pluginName = package:match("^kong%-plugin%-(.+)$")  -- "sa-jwt-claims-validate"
 
-supported_platforms = {"linux"}
+supported_platforms = {"linux", "macosx"}
 source = {
-  url = "https://github.com/Voronenko/kong-plugin-sa-jwt-claims-validate.git",
-  tag = "0.1.0"
+  url = "git://github.com:Voronenko/kong-plugin-sa-jwt-claims-validate",
+  tag = "0.2.0"
 }
 
 description = {
@@ -22,6 +22,8 @@ description = {
 }
 
 dependencies = {
+  "lua >= 5.1",
+  "lua-cjson"
 }
 
 build = {
