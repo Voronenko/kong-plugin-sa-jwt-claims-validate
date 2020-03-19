@@ -13,18 +13,55 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
-          -- a standard defined field (typedef), with some customizations
-          { request_header = typedefs.header_name {
+            -- a standard defined field (typedef), with some customizations
+            {
+              log_level = {
+                  type = "string",
+                  default = "info"
+              }
+            },
+            {
+                uri_param_names = {
+                    type = "array",
+                    elements = {
+                        type = "string",
+                    },
+                    default = { "jwt" }
+                }
+            },
+            {
+               claims = {
+                   type = "map",
+                   keys = {
+                       type = "string",
+                       match_none = {
+                           {
+                               pattern = "^$",
+                               err = "Claim name can't be empty",
+                           },
+                       },
+                   },
+                   values = {
+                       type = "array",
+                       elements = {
+                           type = "string"
+                       },
+                   },               }
+            },
+            { request_header = typedefs.header_name {
               required = true,
-              default = "Hello-World" } },
-          { response_header = typedefs.header_name {
+              default = "Hello-World" }
+            },
+            { response_header = typedefs.header_name {
               required = true,
-              default = "Bye-World" } },
-          { ttl = { -- self defined field
+              default = "Bye-World" }
+            },
+            { ttl = { -- self defined field
               type = "integer",
               default = 600,
               required = true,
-              gt = 0, }}, -- adding a constraint for the value
+              gt = 0, }
+            }, -- adding a constraint for the value
         },
         entity_checks = {
           -- add some validation rules across fields
@@ -45,3 +82,26 @@ pcall(function()
       end)
 
 return schema
+
+
+
+
+--Property name         Lua type          Description
+--name                  string            Name of the plugin, e.g. key-auth.
+--fields                table             Array of field definitions.
+
+--entity_checks         function         Array of conditional entity level validation checks.
+
+
+--All the plugins inherit some default fields which are:
+--
+--Field name            Lua type         Description
+--id                    string           Auto-generated plugin id.
+--name                  string           Name of the plugin, e.g. key-auth.
+--created_at            number           Creation time of the plugin configuration (seconds from epoch).
+--route                 table            Route to which plugin is bound, if any.
+--service               table            Service to which plugin is bound, if any.
+--consumer              table            Consumer to which plugin is bound when possible, if any.
+--protocols             table            The plugin will run on specified protocol(s).
+--enabled               boolean          Whether or not the plugin is enabled.
+--tags                  table            The tags for the plugin.
