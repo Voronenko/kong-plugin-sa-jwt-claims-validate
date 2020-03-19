@@ -16,7 +16,7 @@ source = {
 }
 
 description = {
-  summary = "Kong is a scalable and customizable API Management Layer built on top of Nginx.",
+  summary = "kong-plugin-sa-jwt-claims-validate is a plugin for kong v2 family, that helps to validate JWT token contents before accessing your API",
   homepage = "https://github.com/Voronenko/kong-plugin-sa-jwt-claims-validate",
   license = "MIT"
 }

@@ -77,21 +77,6 @@ for _, strategy in helpers.each_strategy() do
         print("Headers:", debug_dump(assert.response(r)))
       end)
 
-
-      it("gets a 'hello-world' header", function()
-        local r = client:get("/request", {
-          headers = {
-            host = "test1.com"
-          }
-        })
-        -- validate that the request succeeded, response status 200
-        assert.response(r).has.status(200)
-        -- now check the request (as echoed by mockbin) to have the header
-        local header_value = assert.request(r).has.header("hello-world")
-        -- validate the value of that header
-        assert.equal("this is on a request", header_value)
-      end)
-
       it("parses 'authorization' header into x-sa-jwt-token", function()
         local r = client:get("/request", {
           headers = {
@@ -222,24 +207,6 @@ for _, strategy in helpers.each_strategy() do
         assert.equal("https://implicitgrant.auth0.voronenko.net", header_value)
       end)
 
-    end)
-
-
-
-    describe("response", function()
-      it("gets a 'bye-world' header", function()
-        local r = client:get("/request", {
-          headers = {
-            host = "test1.com"
-          }
-        })
-        -- validate that the request succeeded, response status 200
-        assert.response(r).has.status(200)
-        -- now check the response to have the header
-        local header_value = assert.response(r).has.header("bye-world")
-        -- validate the value of that header
-        assert.equal("this is on the response", header_value)
-      end)
     end)
 
   end)

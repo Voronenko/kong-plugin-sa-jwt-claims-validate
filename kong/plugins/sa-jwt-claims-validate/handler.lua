@@ -3,6 +3,8 @@
 
 --assert(ngx.get_phase() == "timer", "The world is coming to an end!")
 
+-- Check PDK for embedded objects  https://docs.konghq.com/2.0.x/pdk/
+
 ---------------------------------------------------------------------------------------------
 -- In the code below, just remove the opening brackets; `[[` to enable a specific handler
 --
@@ -16,6 +18,7 @@ local parsedToken = nil
 -- luacheck: ignore
 local jwt_decoder = require "kong.plugins.jwt.jwt_parser"
 local ngx_re_gmatch = ngx.re.gmatch
+local cjson = require "cjson"
 
 
 --------JWT Parsing logic--------------------------------------------------------------------
@@ -51,22 +54,19 @@ local plugin = {
 }
 
 
-
 -- do initialization here, any module level code runs in the 'init_by_lua_block',
 -- before worker processes are forked. So anything you add here will run once,
 -- but be available in all workers.
 
 
-
 ---[[ handles more initialization, but AFTER the worker process has been forked/created.
 -- It runs in the 'init_worker_by_lua_block'
 -- Executed upon every Nginx worker process’s startup.
-function plugin:init_worker()
-
-  -- your custom code here
-  kong.log.debug("saying hi from the 'init_worker' handler")
-
-end --]]
+--function plugin:init_worker()
+--
+--  -- your custom code here
+--
+--end --]]
 
 
 
@@ -96,29 +96,44 @@ function plugin:rewrite(plugin_conf)
 
 end --]]
 
-
-
 ---[[ runs in the 'access_by_lua_block'
 --- Executed for every request from a client and before it is being proxied to the upstream service.
 function plugin:access(plugin_conf)
+  local set_header = kong.service.request.set_header
+  local jwt_claims = {}
   -- your custom code here
-  kong.log.inspect(plugin_conf)   -- check the logs for a pretty-printed config!
-  ngx.req.set_header(plugin_conf.request_header, "this is on a request")
   local token, err = retrieve_token(ngx.req, plugin_conf)
   if err then
     -- TODO: provide response
+    return kong.response.exit(500, "sa-jwt-claims-validate - error retrieving token")
   end
 
   if token then
-    ngx.req.set_header("x-sa-jwt-token", token)
+    set_header("x-sa-jwt-token", token)
 
     local jwt, err = jwt_decoder:new(token)
     if err then
-      -- TODO: provide response
+      return kong.response.exit(500, "sa-jwt-claims-validate - token was found, but failed to be decoded")
     end
-    local claims = jwt.claims
-    for k,v in pairs(claims) do
-      ngx.req.set_header("x-sa-jwt-claim-" .. k, v)
+    jwt_claims = jwt.claims
+    for k,v in pairs(jwt_claims) do
+      entry_type = type( v )
+      if entry_type == "string" then
+        set_header("x-sa-jwt-claim-" .. k, v)
+      else
+        set_header("x-sa-jwt-claim-" .. k, cjson.encode(v))
+      end
+    end
+  end
+
+  kong.log.inspect(jwt_claims)
+  for claim_key,claim_value in pairs(plugin_conf.claims) do
+    if jwt_claims[claim_key] == nil or jwt_claims[claim_key] ~= claim_value then
+      kong.log.debug("sa-jwt-claims-validate - JSON Web Token has invalid claim value for '"..claim_key.."'")
+      kong.log.inspect(claim_key)
+      kong.log.inspect(claim_value)
+      kong.log.debug("sa-jwt-claims-validate - JSON Web Token has invalid claim value for '"..claim_key.."' you sent '"..jwt_claims[claim_key].."' expecting '"..claim_value.."'")
+      return kong.response.exit(401, "sa-jwt-claims-validate - JSON Web Token has invalid claim value for '"..claim_key.."' you sent '"..jwt_claims[claim_key].."' expecting '"..claim_value.."'")
     end
   end
 
@@ -127,12 +142,9 @@ end --]]
 
 ---[[ runs in the 'header_filter_by_lua_block'
 --- Executed when all response headers bytes have been received from the upstream service.
-function plugin:header_filter(plugin_conf)
-
-  -- your custom code here, for example;
-  ngx.header[plugin_conf.response_header] = "this is on the response"
-
-end --]]
+--function plugin:header_filter(plugin_conf)
+--  -- your custom code here, for example;
+--end --]]
 
 
 --[[ runs in the 'body_filter_by_lua_block'
@@ -155,7 +167,6 @@ function plugin:log(plugin_conf)
   kong.log.debug("saying hi from the 'log' handler")
 
 end --]]
-
 
 -- return our plugin object
 return plugin
