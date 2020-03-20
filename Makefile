@@ -6,3 +6,5 @@ init:
 test:
 	../kong-pongo/pongo.sh lint
 	../kong-pongo/pongo.sh run
+down:
+	../kong-pongo/pongo.sh down
