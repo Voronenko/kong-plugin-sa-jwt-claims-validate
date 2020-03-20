@@ -1,4 +1,5 @@
 local helpers = require "spec.helpers"
+local cjson = require "cjson"
 local PLUGIN_NAME = "sa-jwt-claims-validate"
 
 -- luacheck: ignore
@@ -34,7 +35,8 @@ for _, strategy in helpers.each_strategy() do
                 name = PLUGIN_NAME,
                 route = { id = route1.id },
                 config = {
-                  claims= {
+                    option_expose_headers = false,
+                    claims= {
                         iss = "https://voronenko.auth0.com/",
                         aud = "https://implicitgrant.auth0.voronenko.net"
                     }
@@ -80,29 +82,16 @@ for _, strategy in helpers.each_strategy() do
                 print("Headers:", debug_dump(assert.response(r)))
             end)
 
-            it("Proper jwt token passes through", function()
-                local r = client:get("/request", {
+            it("does not parse 'iss' header into x-sa-jwt-claim-iss", function()
+
+                local res = assert(client:get("/request", {
                     headers = {
                         host = "test1.com",
                         Authorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlF6bEZOak5CUmtZNVJqY3lOVVpCUmpJMU5qRkJOMFl4T0VNMVJFSXhNelU0TVVJeU5qa3dSUSJ9.eyJpc3MiOiJodHRwczovL3Zvcm9uZW5rby5hdXRoMC5jb20vIiwic3ViIjoiUjQ3N3pkMGRoRDBIcTNDbk5JRWdFNjc3bndib1lENXVAY2xpZW50cyIsImF1ZCI6Imh0dHBzOi8vaW1wbGljaXRncmFudC5hdXRoMC52b3JvbmVua28ubmV0IiwiaWF0IjoxNTc1NTgzNTM2LCJleHAiOjE1NzU2Njk5MzYsImF6cCI6IlI0Nzd6ZDBkaEQwSHEzQ25OSUVnRTY3N253Ym9ZRDV1IiwiZ3R5IjoiY2xpZW50LWNyZWRlbnRpYWxzIn0.aIx7LnT7aFPxmK4wCXxxGhEKrxPsGlZ3azEFykynkf6hfyb-4zCXlrqvxNjB9pk_PO8MxmKRJeoRsHLmNOvVls3tE90GQNa6DrqyWuO5PxZetkPyR56o5axt4PddZlop-mukiMYrZF2bP_gdRBZnhR2OJ4vU3qG6Rvs2k-J65tbb2oUERWps7KDC2FeTbV2bc09JtH25StNfYyHOPUR1MiDSKZbZqH3Z0bZUFHN1Ac7jznU3xUV8yEPTy7hQwOWUK5CxUSvd_s4RlTLKsHdAQWWxoDPRvxldwPXtxc7n13hwQPslJNR1ScbREcgJo4zPOcVM_uzTk1ygczLJCzvdsA"
                     }
-                })
-                -- validate that the request succeeded, response status 200
-                assert.response(r).has.status(200)
-                -- now check the request (as echoed by mockbin) to have the header
-            end)
-
-            --http://jwtbuilder.jamiekurtz.com/
-            it("Improper jwt token rejected", function()
-                local r = client:get("/request", {
-                    headers = {
-                        host = "test1.com",
-                        Authorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE1ODQ2MTg0MzcsImV4cCI6MTYxNjE1NDQzNywiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsIkdpdmVuTmFtZSI6IkpvaG5ueSIsIlN1cm5hbWUiOiJSb2NrZXQiLCJFbWFpbCI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJSb2xlIjpbIk1hbmFnZXIiLCJQcm9qZWN0IEFkbWluaXN0cmF0b3IiXX0.oD9SNXOUkcyt9_-ljEtI56MaZudA_W9YypQy9c3IHmzwABEvJOmUUu0Nbhvmv1yta87jUAI4YGOJFgN0wockHQ"
-                    }
-                })
-                -- validate that the request succeeded, response status 200
-                assert.response(r).has.status(401)
-                -- now check the request (as echoed by mockbin) to have the header
+                }))
+               local body = cjson.decode(assert.res_status(200, res))
+               assert.True(body.headers["x-sa-jwt-claim-iss"]==nil)
             end)
 
 

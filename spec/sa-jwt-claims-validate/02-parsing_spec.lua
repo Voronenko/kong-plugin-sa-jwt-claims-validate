@@ -1,6 +1,4 @@
 local helpers = require "spec.helpers"
-
-
 local PLUGIN_NAME = "sa-jwt-claims-validate"
 
 -- luacheck: ignore
