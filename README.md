@@ -3,14 +3,41 @@
 sa-jwt-claims-validate
 ======================
 
-Plugin functionality: 
+Plugin functionality:
 
 supposed to work in combination with kong's built-in jwt plugin.
 Built-in plugin is responsible for validation of the jwt token signature and validity/expiration claims.
 
 This plugin - exposes plugin claims to upstream services via headers,
-additionally it can be used as a security filter to enforce presence of 
-specified claims and checking they are matching expected values. 
+additionally it can be used as a security filter to enforce presence of
+specified claims and checking they are matching expected values.
+
+## Usage
+
+### Parameters
+
+| Parameter | Default  | Required | description |
+| --- | --- | --- | --- |
+| `name` || true | plugin name, has to be `sa-jwt-claims-validate` |
+| `config.log_level` |"info"| false | Tunes level of info provvided for troubleshouting |
+| `config.option_expose_headers` |true| false | If set to true all jwt token data are decoded and exposed to upstream as headers.  |
+| `config.exposed_headers` |"all"| false | Comma separated list of claims to be exposed to upstream as headers or all |
+| `config.validate_iss` |""| false | If set, iss claim is compared to value |
+| `config.validate_sub` |""| false | If set, sub claim is compared to value |
+| `config.validate_aud` |""| false | If set, aud claim is compared to value |
+| `config.validate_azp` |""| false | If set, azp claim is compared to value |
+| `config.validate_client_id` |""| false | If set, client_id claim is compared to value |
+| `config.validate_dynamic1` |""| false | If set in form claim==>value , validates if claim equals specified value |
+| `config.validate_dynamic2` |""| false | If set in form claim==>value , validates if claim equals specified value |
+| `config.validate_dynamic3` |""| false | If set in form claim==>value , validates if claim equals specified value |
+| `config.claims` |nil| false | If set as map form claim:value , validates if claims set matches specified values. Number of claims is not limited |
+
+### Output
+
+Plugin is able to expose all or agreed claims in form of headers `x-sa-jwt-claim-CLAIMNAME`. In case if claim contains object, you will get json serialized values, in other case you will get string.
+
+Separately outputs original authorization token in header `x-sa-jwt-token`
+
 
 ## (A) expose jwt token info to upstream services
 
@@ -61,10 +88,11 @@ it will expose following headers to upstream service:
 ## (B) validate jwt token claims before passing info to upstream services
 
 
-```
+
 ### Activate sa-jwt-claims-validate plugin for service
 
-curl -X POST \ 
+```
+curl -X POST \
      --url {{kong}}/services/{{ m2mservice_name }}/plugins/ \
      -d '{
        "name": "jwt-claims-validate",
@@ -76,6 +104,15 @@ curl -X POST \
        }
      }'
 ```
+
+```
+curl -X POST \
+     --url {{kong}}/services/{{ m2mservice_name }}/plugins/ \
+     --data 'name=jwt-claims-validate' \
+     --data 'validate_iss=https://voronenko.auth0.com/' \
+     --data 'validate_aud=https://implicitgrant.auth0.voronenko.net'
+```
+
 
 ## Development
 This workflow is designed to work with the
